@@ -1,4 +1,4 @@
-name: sim_6099
+name: robocasa_105_overfit
 
 shape_meta: &shape_meta
   # acceptable types: rgb, low_dim
