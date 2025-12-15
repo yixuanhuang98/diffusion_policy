@@ -1,4 +1,4 @@
-name: robocasa_105_overfit
+name: test_3
 
 shape_meta: &shape_meta
   # acceptable types: rgb, low_dim
@@ -7,6 +7,9 @@ shape_meta: &shape_meta
       shape: [3, 84, 84]
       type: rgb
     wrist_image:
+      shape: [3, 84, 84]
+      type: rgb
+    overview_image:
       shape: [3, 84, 84]
       type: rgb
     base_pose:

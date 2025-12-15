@@ -198,6 +198,7 @@ class PolicyServer:
                 obs = req['obs']
                 action = self.step(obs)
                 rep['action'] = action
+            print('rep', rep)
 
             # Send reply to client
             self.socket.send_pyobj(rep)
