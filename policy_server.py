@@ -18,7 +18,7 @@ import zmq
 from diffusion_policy.common.pytorch_util import dict_apply
 from diffusion_policy.model.common.rotation_transformer import RotationTransformer
 
-POLICY_CONTROL_PERIOD = 0.1  # 100 ms (10 Hz)
+POLICY_CONTROL_PERIOD = 0.2  # 100 ms (10 Hz)
 LATENCY_BUDGET = 0.2  # 200 ms including policy inference and communication
 LATENCY_STEPS = math.ceil(LATENCY_BUDGET / POLICY_CONTROL_PERIOD)  # Up to 3 is okay, 4 is too high
 

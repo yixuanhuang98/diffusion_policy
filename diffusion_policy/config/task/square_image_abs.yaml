@@ -1,16 +1,16 @@
-name: test_3
+name: 01_20_test_1
 
 shape_meta: &shape_meta
   # acceptable types: rgb, low_dim
   obs:
     base_image:
-      shape: [3, 84, 84]
+      shape: [3, 224, 224]
       type: rgb
     wrist_image:
-      shape: [3, 84, 84]
+      shape: [3, 224, 224]
       type: rgb
     overview_image:
-      shape: [3, 84, 84]
+      shape: [3, 224, 224]
       type: rgb
     base_pose:
       shape: [3]
