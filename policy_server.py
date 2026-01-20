@@ -93,12 +93,19 @@ class DiffusionPolicy:
     def _convert_action(self, action):
         act_sequence = []
         for act in action:
-            action_dict = {
-                'base_pose': act[:3],
-                'arm_pos': act[3:6],
-                'arm_quat': self.rotation_transformer.forward(act[6:12])[[1, 2, 3, 0]],  # (w, x, y, z) -> (x, y, z, w)
-                'gripper_pos': act[12:13],
-            }
+            if act.shape[0] == 11:
+                action_dict = {
+                    'base_pose': act[:3],
+                    'arm_qpos': act[3:10],
+                    'gripper_pos': act[10:11],
+                }
+            else:
+                action_dict = {
+                    'base_pose': act[:3],
+                    'arm_pos': act[3:6],
+                    'arm_quat': self.rotation_transformer.forward(act[6:12])[[1, 2, 3, 0]],  # (w, x, y, z) -> (x, y, z, w)
+                    'gripper_pos': act[12:13],
+                }
             act_sequence.append(action_dict)
         return act_sequence
 
