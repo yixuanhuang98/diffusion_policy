@@ -93,11 +93,7 @@ class DiffusionPolicy:
     def _convert_action(self, action):
         act_sequence = []
         for act in action:
-            if act.shape[0] == 5:
-                action_dict = {
-                    'robot_actions': act[:5],
-                }
-            elif act.shape[0] == 11:
+            if act.shape[0] == 11:
                 action_dict = {
                     'base_pose': act[:3],
                     'arm_qpos': act[3:10],

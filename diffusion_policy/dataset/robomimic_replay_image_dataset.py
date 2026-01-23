@@ -42,6 +42,7 @@ class RobomimicReplayImageDataset(BaseImageDataset):
             rotation_rep='rotation_6d', # ignored when abs_action=False
             use_legacy_normalizer=False,
             use_cache=False,
+            delta_action=False,
             seed=42,
             val_ratio=0.0
         ):
@@ -128,6 +129,7 @@ class RobomimicReplayImageDataset(BaseImageDataset):
         self.n_obs_steps = n_obs_steps
         self.train_mask = train_mask
         self.horizon = horizon
+        self.delta_action = delta_action
         self.pad_before = pad_before
         self.pad_after = pad_after
         self.use_legacy_normalizer = use_legacy_normalizer
@@ -148,15 +150,22 @@ class RobomimicReplayImageDataset(BaseImageDataset):
         normalizer = LinearNormalizer()
 
         # action
-        stat = array_to_stats(self.replay_buffer['action'])
-        if self.abs_action:
-            this_normalizer = robomimic_abs_action_only_normalizer_from_stat(stat)
-            
-            if self.use_legacy_normalizer:
-                this_normalizer = normalizer_from_stat(stat)
+        if self.delta_action:
+            # Compute delta action statistics
+            delta_actions = self._compute_all_delta_actions()
+            stat = array_to_stats(delta_actions)
+            this_normalizer = get_range_normalizer_from_stat(stat)
         else:
-            # already normalized
-            this_normalizer = get_identity_normalizer_from_stat(stat)
+            stat = array_to_stats(self.replay_buffer['action'])
+            if self.abs_action:
+                this_normalizer = robomimic_abs_action_only_normalizer_from_stat(stat)
+                
+                if self.use_legacy_normalizer:
+                    this_normalizer = normalizer_from_stat(stat)
+            else:
+                # already normalized
+                this_normalizer = get_identity_normalizer_from_stat(stat)
+        
         normalizer['action'] = this_normalizer
 
         # obs
@@ -170,6 +179,8 @@ class RobomimicReplayImageDataset(BaseImageDataset):
                 this_normalizer = get_identity_normalizer_from_stat(stat)
             elif key.endswith('qpos'):
                 this_normalizer = get_range_normalizer_from_stat(stat)
+            elif key.endswith('state'):
+                this_normalizer = get_range_normalizer_from_stat(stat)
             elif key == 'base_pose':
                 this_normalizer = get_range_normalizer_from_stat(stat)
             else:
@@ -181,7 +192,29 @@ class RobomimicReplayImageDataset(BaseImageDataset):
             normalizer[key] = get_image_range_normalizer()
         return normalizer
 
+    def _compute_all_delta_actions(self):
+        """Compute delta actions for all sequences to get accurate statistics."""
+        all_deltas = []
+        actions = self.replay_buffer['action'][:]
+        episode_ends = self.replay_buffer.episode_ends[:]
+        
+        for i in range(len(episode_ends)):
+            start = 0 if i == 0 else episode_ends[i-1]
+            end = episode_ends[i]
+            
+            ep_actions = actions[start:end]
+            # For each possible sequence start in this episode
+            for seq_start in range(len(ep_actions) - self.horizon + 1):
+                seq_actions = ep_actions[seq_start:seq_start + self.horizon]
+                reference = seq_actions[0:1]
+                delta = seq_actions - reference
+                all_deltas.append(delta)
+        
+        return np.concatenate(all_deltas, axis=0)
+    
     def get_all_actions(self) -> torch.Tensor:
+        if self.delta_action:
+            return torch.from_numpy(self._compute_all_delta_actions())
         return torch.from_numpy(self.replay_buffer['action'])
 
     def __len__(self):
@@ -210,9 +243,18 @@ class RobomimicReplayImageDataset(BaseImageDataset):
             obs_dict[key] = data[key][T_slice].astype(np.float32)
             del data[key]
 
+        action = data['action'].astype(np.float32)
+    
+        # Delta action relative to start of sequence
+        if self.delta_action:
+            # Reference: first action in the sequence (or first obs step)
+            reference_action = action[0:1]  # shape: (1, action_dim)
+            action = action - reference_action  # Broadcast subtraction
+            # Note: action[0] will be zeros
+        
         torch_data = {
             'obs': dict_apply(obs_dict, torch.from_numpy),
-            'action': torch.from_numpy(data['action'].astype(np.float32))
+            'action': torch.from_numpy(action)
         }
         return torch_data
 
