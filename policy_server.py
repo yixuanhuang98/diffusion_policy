@@ -99,10 +99,14 @@ class DiffusionPolicy:
                 }
             elif act.shape[0] == 11:
                 action_dict = {
-                    'base_pose': act[:3],
-                    'arm_qpos': act[3:10],
-                    'gripper_pos': act[10:11],
+                    'robot_actions': act[:11],
                 }
+            # elif act.shape[0] == 11:
+            #     action_dict = {
+            #         'base_pose': act[:3],
+            #         'arm_qpos': act[3:10],
+            #         'gripper_pos': act[10:11],
+            #     }
             else:
                 action_dict = {
                     'base_pose': act[:3],
