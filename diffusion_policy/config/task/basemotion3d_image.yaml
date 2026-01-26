@@ -15,8 +15,6 @@ shape_meta: &shape_meta
     robot_state:
       shape: [19]
       # type default: low_dim
-    env_state:
-      shape: [3]
   action: 
     shape: [11]
 
