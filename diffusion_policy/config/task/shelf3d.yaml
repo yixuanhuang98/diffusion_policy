@@ -1,4 +1,4 @@
-name: sweep3d_100
+name: shelf3d_106_new
 
 shape_meta: &shape_meta
   # acceptable types: rgb, low_dim
@@ -16,7 +16,7 @@ shape_meta: &shape_meta
       shape: [22]
       # type default: low_dim
     env_state:
-      shape: [131]
+      shape: [23]
   action: 
     shape: [11]
 
