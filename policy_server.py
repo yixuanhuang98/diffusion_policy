@@ -62,6 +62,7 @@ class DiffusionPolicy:
 
     def step(self, obs_sequence):
         obs_dict = self._convert_obs(obs_sequence)
+        st = time.time()
         with torch.no_grad():
             if not self.warmed_up:
                 print('Warming up policy...')
@@ -72,7 +73,10 @@ class DiffusionPolicy:
             # elapsed_time = time.time() - start_time
             # print(f'Inference time: {1000 * elapsed_time:.1f} ms')  # 115 ms (RTX 4080 Laptop)
             action = result['action'][0].detach().to('cpu').numpy()
-        act_sequence = self._convert_action(action)
+        et = time.time()
+        inference_time = et - st
+        print(f'Inference time: {inference_time}')
+        act_sequence = self._convert_action(action, inference_time)
         return act_sequence
 
     def _convert_obs(self, obs_sequence):
@@ -90,16 +94,18 @@ class DiffusionPolicy:
         obs_dict = dict_apply(obs_dict_np, lambda x: torch.from_numpy(x).unsqueeze(0).to(self.device))
         return obs_dict
 
-    def _convert_action(self, action):
+    def _convert_action(self, action, inference_time):
         act_sequence = []
         for act in action:
             if act.shape[0] == 5:
                 action_dict = {
                     'robot_actions': act[:5],
+                    'inference_time': inference_time,
                 }
             elif act.shape[0] == 11:
                 action_dict = {
                     'robot_actions': act[:11],
+                    'inference_time': inference_time,
                 }
             # elif act.shape[0] == 11:
             #     action_dict = {
