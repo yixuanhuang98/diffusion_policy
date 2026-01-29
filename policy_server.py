@@ -18,8 +18,8 @@ import zmq
 from diffusion_policy.common.pytorch_util import dict_apply
 from diffusion_policy.model.common.rotation_transformer import RotationTransformer
 
-POLICY_CONTROL_PERIOD = 0.2  # 100 ms (10 Hz)
-LATENCY_BUDGET = 0.2  # 200 ms including policy inference and communication
+POLICY_CONTROL_PERIOD = 0.02  # 100 ms (10 Hz)
+LATENCY_BUDGET = 0.06  # 200 ms including policy inference and communication
 LATENCY_STEPS = math.ceil(LATENCY_BUDGET / POLICY_CONTROL_PERIOD)  # Up to 3 is okay, 4 is too high
 
 class StubDiffusionPolicy:
@@ -206,7 +206,6 @@ class PolicyServer:
         while True:
             # Wait for request from client
             req = self.socket.recv_pyobj()  # Note: Not secure. Only unpickle data you trust.
-            print('req', req)
             rep = {}
 
             # Reset policy
@@ -219,7 +218,7 @@ class PolicyServer:
                 obs = req['obs']
                 action = self.step(obs)
                 rep['action'] = action
-            print('rep', rep)
+            # print('rep', rep)
 
             # Send reply to client
             self.socket.send_pyobj(rep)
